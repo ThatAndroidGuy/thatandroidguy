@@ -1,0 +1,89 @@
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Chart.js</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+</head>
+<body>
+  <div>
+    <div>
+      <canvas id="canvas" height="500" width="1000"></canvas>
+    </div>
+  </div>
+
+
+  <script>
+  //grab our data from the 311 API
+  $.getJSON("https://opendata.miamidade.gov/resource/dj6j-qg5t.json?issue_type=ANIMAL%20BITE%20TO%20A%20PERSON&created_year_month=201511", function( data ) {
+    //create array to hold all november dates
+    var datesBites = [];
+    //set string length for dates in data
+    var dateLength = 10;
+    //make an empty array to collect all the dates for labels
+    var labelsArr = [];
+    //make an empty array to collect all the bites
+    var bites = [];
+    //create the date labels for the chart
+    for (i = 1; i < 31; i++) {
+      //if i is less than 9 add a 0 to day digit
+      if (i<10){
+        //create november date labels for single-digit days
+        var label = "2015-11-0"+i;
+      }else{
+        //create november date labels for days > 10
+        var label = "2015-11-"+i;
+      };
+      //push labels into the labelsArr array
+      labelsArr.push(label);
+      //push an object for each date that includes the date label and sets the bite count to 0 into the datesBites array
+      datesBites.push( { 'date': label, 'bites': 0 } );
+    };
+    //loop through each object from the 311 API data
+    $.each(data, function(i, item){
+      //set a date variable to the ticket created date in the data
+      var date = data[i].ticket_created_date_time;
+      //truncate the date variable to only show YYYY-MM-DD
+      var cleanDate = date.substring(0, dateLength);
+      //compare the clean Date to the date of each object in our dateBites array
+      $.each(datesBites, function(x, item){
+        //if the ticket_created_date matches a date in an object within dateBites …
+        if ( cleanDate === datesBites[x].date ){
+          //then add 1 to the bites count in the datesBites object
+          datesBites[x].bites++;
+        }
+      });
+    });
+    //loop through each item in the datesBites array
+    $.each(datesBites, function(i, item){
+      //push the bite count for each date into the bites array
+      bites.push(datesBites[i].bites);
+    });
+    //set up the chart
+    var lineChartData = {
+      labels : labelsArr, //set labels to our labelsArr array
+      datasets : [
+        {
+          label: "Animal Bite Dataset",
+          fillColor : "rgba(220,220,220,0.2)",
+          strokeColor : "rgba(220,220,220,1)",
+          pointColor : "rgba(220,220,220,1)",
+          pointStrokeColor : "#fff",
+          pointHighlightFill : "#fff",
+          pointHighlightStroke : "rgba(220,220,220,1)",
+          data : bites //set data to bites array
+        }
+      ]
+    }
+    //set up canvas
+    var ctx = document.getElementById("canvas").getContext("2d");
+    //draw chart
+    window.myLine = new Chart(ctx).Line(lineChartData, {
+      //make chart responsive
+      responsive: true
+    });
+  });
+
+  </script>
+</body>
